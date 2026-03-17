@@ -24,7 +24,8 @@ from playwright.async_api import async_playwright
 from .config import (
     OUTPUT_BASE, HEADLESS, SLOW_MO, TIMEOUT,
     PAGE_LOAD_WAIT, SCROLL_COUNT, SCROLL_INTERVAL,
-    BETWEEN_PAGES, BETWEEN_TASKS, BETWEEN_TASKS_SHORT
+    BETWEEN_PAGES, BETWEEN_TASKS, BETWEEN_TASKS_SHORT,
+    TEST_MODE, TEST_TIMEOUT
 )
 from .utils import (
     log, parse_farfetch_product, sanitize_filename,
@@ -82,10 +83,21 @@ async def navigate_and_extract_page(page, url, page_num=1):
         target_url = url
 
     log(f"📍 导航到: {target_url}")
+    
+    import time
+    start_time = time.time()
+    
+    # 根据测试模式选择超时时间
+    actual_timeout = TEST_TIMEOUT if TEST_MODE else TIMEOUT
+    if TEST_MODE:
+        log(f"🧪 测试模式：使用超时时间 {actual_timeout}ms")
 
     try:
         # 导航到页面（使用 load 策略，比 networkidle 更宽松）
-        await page.goto(target_url, timeout=TIMEOUT, wait_until="load")
+        goto_start = time.time()
+        await page.goto(target_url, timeout=actual_timeout, wait_until="load")
+        goto_time = int((time.time() - goto_start) * 1000)
+        log(f"⏱️ 页面加载耗时: {goto_time}ms")
 
         # 反爬机制：随机等待页面加载
         wait_time = get_random_delay(PAGE_LOAD_WAIT)
@@ -97,16 +109,21 @@ async def navigate_and_extract_page(page, url, page_num=1):
         log(f"🔄 执行 {scroll_times} 次滚动触发懒加载...")
 
         scroll_script = "() => { window.scrollTo(0, document.body.scrollHeight); return 'scrolled'; }"
+        scroll_start = time.time()
         for i in range(scroll_times):
             await page.evaluate(scroll_script)
             if i < scroll_times - 1:
                 await page.wait_for_timeout(SCROLL_INTERVAL)
+        scroll_time = int((time.time() - scroll_start) * 1000)
+        log(f"⏱️ 滚动耗时: {scroll_time}ms")
 
         log("✅ 懒加载触发完成")
 
         # 提取商品数据
+        extract_start = time.time()
         raw_data = await page.evaluate(EXTRACT_PRODUCTS_SCRIPT)
-        log(f"✅ 提取到 {len(raw_data)} 个原始数据")
+        extract_time = int((time.time() - extract_start) * 1000)
+        log(f"✅ 提取到 {len(raw_data)} 个原始数据 (耗时: {extract_time}ms)")
 
         # 解析商品信息
         products = []
@@ -115,7 +132,11 @@ async def navigate_and_extract_page(page, url, page_num=1):
             if parsed:
                 products.append(parsed)
 
+        # 统计总耗时
+        total_time = int((time.time() - start_time) * 1000)
         log(f"✅ 成功解析 {len(products)} 个商品")
+        log(f"⏱️ 本页总耗时: {total_time}ms ({total_time/1000:.1f}秒)")
+        log(f"⏱️ 时间分布: 页面加载 {goto_time}ms + 滚动 {scroll_time}ms + 提取 {extract_time}ms")
         return products
 
     except Exception as e:

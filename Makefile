@@ -80,6 +80,14 @@ extract: ## 重新提取分类
 	@echo "$(GREEN)📊 提取分类...$(NC)"
 	@python3 -m playwright_crawler.extract_categories
 
+test-timeout: ## 测试超时时间
+	@echo "$(GREEN)🧪 超时时间测试工具...$(NC)"
+	@python3 test_timeout.py
+
+test-shoes-quick: ## 测试女鞋（3条）使用当前超时设置
+	@echo "$(GREEN)🧪 测试女鞋类目（3条）...$(NC)"
+	@python3 -m playwright_crawler.batch_crawler data/女鞋类目_测试3条.csv
+
 interactive: ## 交互式菜单
 	@echo "$(GREEN)🎮 启动交互式菜单...$(NC)"
 	@python3 quick_start.py
