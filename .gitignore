@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+logs/
+output/
+
+# Playwright
+.playwright/
+
+# Backups
+*.backup
+*.bak
+*.tmp
+
+# Config backup (but keep original)
+playwright_crawler/config.py.backup
+
+# Keep output directory structure but ignore contents
+output/*
+!output/.gitkeep
+
+# Keep logs directory structure but ignore contents
+logs/*
+!logs/.gitkeep
+
+# Original tar.gz (source file)
+farfetch_crawler.tar.gz
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
