@@ -49,6 +49,11 @@ quick: ## 快速测试（10个示例分类）
 	@echo "$(GREEN)🚀 快速测试（10个示例分类）...$(NC)"
 	@python3 -m playwright_crawler.batch_crawler data/服装分类_示例.csv
 
+quick-shoes: ## 快速测试女鞋类目（3个示例分类）
+	@echo "$(GREEN)🚀 快速测试女鞋类目...$(NC)"
+	@head -4 data/女鞋类目.csv | tail -3 > /tmp/女鞋类目_示例.csv
+	@python3 -m playwright_crawler.batch_crawler /tmp/女鞋类目_示例.csv
+
 full: ## 完整爬取（88个分类）
 	@echo "$(GREEN)🚀 完整爬取（88个分类）...$(NC)"
 	@echo "$(YELLOW)⚠️  此操作可能需要 1-2 小时，请确保网络稳定$(NC)"
@@ -56,6 +61,17 @@ full: ## 完整爬取（88个分类）
 	echo ""; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		python3 -m playwright_crawler.batch_crawler data/服装分类_完整版.csv; \
+	else \
+		echo "$(YELLOW)❌ 已取消$(NC)"; \
+	fi
+
+full-shoes: ## 完整爬取女鞋类目（26个分类）
+	@echo "$(GREEN)🚀 完整爬取女鞋类目（26个分类）...$(NC)"
+	@echo "$(YELLOW)⚠️  此操作可能需要 2-4 小时，请确保网络稳定$(NC)"
+	@read -p "确认继续？[y/N] " -n 1 -r; \
+	echo ""; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		python3 -m playwright_crawler.batch_crawler data/女鞋类目.csv; \
 	else \
 		echo "$(YELLOW)❌ 已取消$(NC)"; \
 	fi

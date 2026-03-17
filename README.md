@@ -1,6 +1,6 @@
-# FARFETCH 服装数据爬虫（Playwright 版本）
+# FARFETCH 数据爬虫（Playwright 版本）
 
-基于 Playwright 的 FARFETCH 商品数据批量爬取工具，完全脱离 OpenClaw 运行环境。
+基于 Playwright 的 FARFETCH 商品数据批量爬取工具，支持服装、女鞋等多个类目，完全脱离 OpenClaw 运行环境。
 
 ## 📦 特性
 
@@ -56,6 +56,8 @@ python3 test.py
 
 #### 方式一：使用预提取的分类数据（推荐）
 
+**服装类目：**
+
 ```bash
 # 使用 Makefile（推荐）
 make quick      # 快速测试（10个示例分类）
@@ -65,6 +67,19 @@ make full       # 完整运行（88个分类）
 python3 -m playwright_crawler.batch_crawler data/服装分类_示例.csv
 python3 -m playwright_crawler.batch_crawler data/服装分类_完整版.csv
 ```
+
+**女鞋类目：**
+
+```bash
+# 使用 Makefile（推荐）
+make quick-shoes    # 快速测试女鞋类目（3个示例分类）
+make full-shoes     # 完整运行女鞋类目（26个分类）
+
+# 或使用命令行
+python3 -m playwright_crawler.batch_crawler data/女鞋类目.csv
+```
+
+⚠️ **注意：** 爬虫是通用的，可以爬取 FARFETCH 的任何类目，只需提供对应格式的 CSV 文件。
 
 #### 方式二：重新提取分类
 
@@ -107,7 +122,8 @@ farfetch-crawler/
 │   └── batch_crawler.py        # 批量爬虫
 ├── data/                       # 数据目录
 │   ├── 服装分类_示例.csv       # 10条示例
-│   └── 服装分类_完整版.csv     # 88条完整数据
+│   ├── 服装分类_完整版.csv     # 88条完整数据
+│   └── 女鞋类目.csv            # 26个女鞋分类
 ├── output/                     # 输出目录
 │   ├── batch_crawler.log       # 运行日志
 │   ├── 连衣裙/
@@ -116,6 +132,7 @@ farfetch-crawler/
 ├── logs/                       # 日志目录
 ├── Makefile                    # 命令管理
 ├── MAKEFILE_GUIDE.md           # Makefile 使用指南
+├── SHOES_GUIDE.md             # 女鞋类目使用指南
 └── requirements.txt            # 依赖清单
 ```
 
@@ -336,8 +353,68 @@ playwright install --force chromium
    - 检查 output 目录确认数据生成
 
 4. **数据校验**
-   - 随机抽查 CSV 文件内容
-   - 确认品牌、价格等字段完整
+    - 随机抽查 CSV 文件内容
+    - 确认品牌、价格等字段完整
+
+---
+
+## 👟 支持的类目
+
+### 服装类目
+
+**数据文件：**
+- `data/服装分类_示例.csv` - 10 条测试数据
+- `data/服装分类_完整版.csv` - 88 条完整数据
+
+**使用方式：**
+```bash
+make quick      # 快速测试
+make full       # 完整爬取
+```
+
+**详细说明：** 见本文档"运行爬虫"部分
+
+---
+
+### 女鞋类目
+
+**数据文件：**
+- `data/女鞋类目.csv` - 26 个女鞋分类
+
+**主要类目：**
+- Boots（靴子）- 机车靴、及膝靴、过膝靴、及踝靴等
+- 穆勒鞋 - 平底穆勒鞋、高跟穆勒鞋
+- 草编鞋 - 平底草编鞋、高跟草编鞋
+- 高跟鞋 - 平底鞋、高跟鞋
+- 凉鞋 - 平底凉鞋、高跟凉鞋
+- 运动鞋 - 低帮鞋、高帮鞋、套穿鞋
+- 其他 - 德比鞋、乐福鞋、芭蕾平底鞋等
+
+**使用方式：**
+```bash
+make quick-shoes   # 快速测试（3个示例）
+make full-shoes    # 完整爬取（26个分类）
+```
+
+**详细说明：** [鞋子类目使用指南](SHOES_GUIDE.md)
+
+---
+
+### 自定义类目
+
+爬虫支持 FARFETCH 的任何类目，只需提供对应格式的 CSV 文件：
+
+```csv
+一级分类,二级分类,网页链接,从第几页开始,到第几页为止
+自定义分类,自定义子分类,https://www.farfetch.com/cn/...,1,10
+```
+
+运行方式：
+```bash
+python3 -m playwright_crawler.batch_crawler 你的CSV文件.csv
+```
+
+---
 
 ## 🆘 获取帮助
 
