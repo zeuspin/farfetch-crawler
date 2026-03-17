@@ -76,25 +76,25 @@ full-shoes: ## 完整爬取女鞋类目（26个分类）
 		echo "$(YELLOW)❌ 已取消$(NC)"; \
 	fi
 
-extract: ## 提取所有分类（默认 cn 域名）
-	@echo "$(GREEN)📊 提取所有分类（cn 域名）...$(NC)"
+extract: ## 提取所有分类（默认女装）
+	@echo "$(GREEN)📊 提取分类...$(NC)"
 	@python3 -m playwright_crawler.extract_categories
 
-extract-sg: ## 提取所有分类（sg 域名）
-	@echo "$(GREEN)📊 提取所有分类（sg 域名）...$(NC)"
-	@python3 -m playwright_crawler.extract_categories --base-url sg
+extract-women: ## 提取女装分类
+	@echo "$(GREEN)📊 提取女装分类...$(NC)"
+	@python3 -m playwright_crawler.extract_categories --category-type women
 
-extract-cn: ## 提取所有分类（cn 域名）
-	@echo "$(GREEN)📊 提取所有分类（cn 域名）...$(NC)"
-	@python3 -m playwright_crawler.extract_categories --base-url cn
+extract-men: ## 提取男装分类
+	@echo "$(GREEN)📊 提取男装分类...$(NC)"
+	@python3 -m playwright_crawler.extract_categories --category-type men
 
-extract-dresses: ## 只提取连衣裙分类
-	@echo "$(GREEN)📊 只提取连衣裙分类...$(NC)"
-	@python3 -m playwright_crawler.extract_categories --categories 连衣裙
+extract-men-shoes: ## 提取男装鞋子分类
+	@echo "$(GREEN)📊 提取男装鞋子分类...$(NC)"
+	@python3 -m playwright_crawler.extract_categories --category-type men --categories 夹克
 
-extract-pants: ## 只提取裤子分类
-	@echo "$(GREEN)📊 只提取裤子分类...$(NC)"
-	@python3 -m playwright_crawler.extract_categories --categories 裤子
+extract-women-shoes: ## 提取女装鞋子分类
+	@echo "$(GREEN)📊 提取女装鞋子分类...$(NC)"
+	@python3 -m playwright_crawler.extract_categories --category-type women --categories 乐福鞋
 
 test-timeout: ## 测试超时时间
 	@echo "$(GREEN)🧪 超时时间测试工具...$(NC)"
