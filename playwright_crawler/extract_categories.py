@@ -161,7 +161,7 @@ async def run_script(page, script):
     return await page.evaluate(script)
 
 
-async def extract_categories(base_url="cn", category_type="women", specific_categories=None, output_file_name=None):
+async def extract_categories(base_url="cn", category_type="women", specific_categories=None, specific_urls=None, output_file_name=None):
     """
     主函数：提取所有分类
     
@@ -169,11 +169,104 @@ async def extract_categories(base_url="cn", category_type="women", specific_cate
         base_url: 基础 URL 域名
         category_type: 商品类型
         specific_categories: 指定要提取的一级类目列表（如 ['连衣裙', '裤子']）
+        specific_urls: 直接指定要提取的完整 URL 列表（最高优先级）
         output_file_name: 输出文件名
     """
     # 确保输出目录存在
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
+    # 优先级：specific_urls > specific_categories > 自动提取
+    
+    # 如果指定了具体的 URL 列表，直接使用
+    if specific_urls:
+        log(f"🎯 使用指定的 URL 列表，共 {len(specific_urls)} 个")
+        
+        # 从 URL 中提取分类信息
+        all_results = []
+        
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=HEADLESS,
+                slow_mo=SLOW_MO
+            )
+            
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1920, "height": 1080}
+            )
+            page = await context.new_page()
+            
+            try:
+                for i, url in enumerate(specific_urls, 1):
+                    log(f"\n[{i}/{len(specific_urls)}] 提取 URL: {url}")
+                    log("-" * 60)
+                    
+                    try:
+                        # 导航到页面
+                        log(f"  导航到页面...")
+                        await navigate_to(page, url)
+                        
+                        # 提取商品信息（作为一级分类）
+                        log(f"  提取商品信息...")
+                        
+                        # 提取总页数
+                        pages_data = await run_script(page, GET_PAGES_SCRIPT)
+                        total_pages = pages_data.get('total_pages', 1) if pages_data else 1
+                        
+                        # 从 URL 推断分类信息
+                        from urllib.parse import urlparse
+                        path_parts = urlparse(url).path.split('/')
+                        category = "未知分类"
+                        if len(path_parts) >= 3:
+                            category_part = path_parts[-2]  # 如 shoes-2
+                            # 移除数字后缀
+                            category = category_part.rsplit('-', 1)[0].replace('-', ' ')
+                        
+                        all_results.append({
+                            "一级分类": category,
+                            "二级分类": "所有商品",
+                            "网页链接": url,
+                            "从第几页开始": 1,
+                            "到第几页为止": total_pages
+                        })
+                        
+                        log(f"  ✅ 提取成功：{category}，共 {total_pages} 页")
+                        
+                    except Exception as e:
+                        log(f"  ❌ 失败: {e}")
+                        all_results.append({
+                            "一级分类": "未知分类",
+                            "二级分类": "所有商品",
+                            "网页链接": url,
+                            "从第几页开始": 1,
+                            "到第几页为止": "需手动填写"
+                        })
+                        
+            finally:
+                await context.close()
+                await browser.close()
+        
+        # 保存为 CSV
+        if output_file_name:
+            output_file = OUTPUT_DIR / output_file_name
+        else:
+            output_file = OUTPUT_DIR / "指定URL_提取结果.csv"
+            
+        with open(output_file, 'w', newline='', encoding='utf-8-sig') as f:
+            writer = csv.DictWriter(f, fieldnames=["一级分类", "二级分类", "网页链接", "从第几页开始", "到第几页为止"])
+            writer.writeheader()
+            writer.writerows(all_results)
+        
+        log("=" * 80)
+        log("✅ 完成！")
+        log("=" * 80)
+        log(f"输出文件: {output_file}")
+        log(f"总记录数: {len(all_results)}")
+        log()
+        
+        return
+    
+    # 如果没有指定 URL 列表，继续使用原有逻辑（从一级类目提取二级类目）
     # 获取一级类目列表
     LEVEL1_CATEGORIES = get_level1_categories(base_url, category_type)
     
@@ -278,9 +371,9 @@ async def extract_categories(base_url="cn", category_type="women", specific_cate
         writer.writeheader()
         writer.writerows(all_results)
 
-    log(f"\n{'='*80}")
-    log(f"✅ 完成！")
-    log(f"{'='*80}")
+     log("=" * 80)
+    log("✅ 完成！")
+    log("=" * 80)
     log(f"输出文件: {output_file}")
     log(f"总记录数: {len(all_results)}")
     
@@ -346,7 +439,19 @@ def main():
     parser.add_argument(
         '--output',
         type=str,
-        help='输出文件名（默认: {category_type}_分类_所有二级类目.csv）'
+        help='输出文件名（默认: 指定URL_提取结果.csv）'
+    )
+    
+    parser.add_argument(
+        '--url',
+        type=str,
+        help='指定单个 URL（直接提取该页面的商品）'
+    )
+    
+    parser.add_argument(
+        '--urls',
+        type=str,
+        help='指定多个 URL（逗号分隔）'
     )
     
     args = parser.parse_args()
@@ -356,11 +461,19 @@ def main():
     if args.categories:
         specific_categories = [cat.strip() for cat in args.categories.split(',')]
     
+    # 解析 URL 列表（最高优先级）
+    specific_urls = []
+    if args.url:
+        specific_urls = [args.url.strip()]
+    elif args.urls:
+        specific_urls = [url.strip() for url in args.urls.split(',') if url.strip()]
+    
     # 运行提取
     asyncio.run(extract_categories(
         base_url=args.base_url,
         category_type=args.category_type,
         specific_categories=specific_categories,
+        specific_urls=specific_urls,
         output_file_name=args.output
     ))
 
