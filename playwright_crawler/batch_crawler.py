@@ -84,8 +84,8 @@ async def navigate_and_extract_page(page, url, page_num=1):
     log(f"📍 导航到: {target_url}")
 
     try:
-        # 导航到页面
-        await page.goto(target_url, timeout=TIMEOUT, wait_until="networkidle")
+        # 导航到页面（使用 load 策略，比 networkidle 更宽松）
+        await page.goto(target_url, timeout=TIMEOUT, wait_until="load")
 
         # 反爬机制：随机等待页面加载
         wait_time = get_random_delay(PAGE_LOAD_WAIT)

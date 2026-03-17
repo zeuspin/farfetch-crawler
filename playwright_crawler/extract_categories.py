@@ -94,7 +94,7 @@ async def navigate_to(page, url):
         page: Playwright Page 对象
         url: 目标 URL
     """
-    await page.goto(url, timeout=TIMEOUT, wait_until="networkidle")
+    await page.goto(url, timeout=TIMEOUT, wait_until="load")
     # 随机等待页面加载
     from .utils import get_random_delay
     wait_time = get_random_delay(PAGE_LOAD_WAIT)
