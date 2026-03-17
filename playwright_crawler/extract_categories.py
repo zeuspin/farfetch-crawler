@@ -6,6 +6,7 @@ FARFETCH 分类提取工具（Playwright 版本）
 
 import asyncio
 import csv
+import argparse
 from pathlib import Path
 
 from playwright.async_api import async_playwright
@@ -15,6 +16,31 @@ from .config import (
     PAGE_LOAD_WAIT, HEADLESS, SLOW_MO, TIMEOUT
 )
 from .utils import log
+
+
+def get_level1_categories(base_url="cn"):
+    """
+    获取一级类目列表
+    
+    Args:
+        base_url: 基础 URL (cn/sg 等）
+        
+    Returns:
+        一级类目列表
+    """
+    return [
+        {"name": "连衣裙", "url": f"https://www.farfetch.com/{base_url}/shopping/women/dresses-1/items.aspx"},
+        {"name": "裤子", "url": f"https://www.farfetch.com/{base_url}/shopping/women/trousers-1/items.aspx"},
+        {"name": "上衣", "url": f"https://www.farfetch.com/{base_url}/shopping/women/tops-1/items.aspx"},
+        {"name": "半身裙", "url": f"https://www.farfetch.com/{base_url}/shopping/women/skirts-1/items.aspx"},
+        {"name": "西装", "url": f"https://www.farfetch.com/{base_url}/shopping/women/suits-1/items.aspx"},
+        {"name": "短裤", "url": f"https://www.farfetch.com/{base_url}/shopping/women/shorts-1/items.aspx"},
+        {"name": "夹克", "url": f"https://www.farfetch.com/{base_url}/shopping/women/jackets-1/items.aspx"},
+        {"name": "外套", "url": f"https://www.farfetch.com/{base_url}/shopping/women/coats-1/items.aspx"},
+        {"name": "针织衫", "url": f"https://www.farfetch.com/{base_url}/shopping/women/knitwear-1/items.aspx"},
+        {"name": "连体衣/裤", "url": f"https://www.farfetch.com/{base_url}/shopping/women/all-in-one-1/items.aspx"},
+        {"name": "沙滩装", "url": f"https://www.farfetch.com/{base_url}/shopping/women/beachwear-1/items.aspx"},
+    ]
 
 
 # ==================== JavaScript 脚本 ====================
@@ -115,27 +141,31 @@ async def run_script(page, script):
     return await page.evaluate(script)
 
 
-async def extract_categories():
+async def extract_categories(base_url="cn", specific_categories=None, output_file_name=None):
     """
     主函数：提取所有分类
+    
+    Args:
+        base_url: 基础 URL (cn/sg 等)
+        specific_categories: 指定要提取的一级类目列表（如 ['连衣裙', '裤子']）
+        output_file_name: 输出文件名
     """
     # 确保输出目录存在
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
-    # 一级类目列表
-    LEVEL1_CATEGORIES = [
-        {"name": "连衣裙", "url": "https://www.farfetch.com/sg/shopping/women/dresses-1/items.aspx"},
-        {"name": "裤子", "url": "https://www.farfetch.com/sg/shopping/women/trousers-1/items.aspx"},
-        {"name": "上衣", "url": "https://www.farfetch.com/sg/shopping/women/tops-1/items.aspx"},
-        {"name": "半身裙", "url": "https://www.farfetch.com/sg/shopping/women/skirts-1/items.aspx"},
-        {"name": "西装", "url": "https://www.farfetch.com/sg/shopping/women/suits-1/items.aspx"},
-        {"name": "短裤", "url": "https://www.farfetch.com/sg/shopping/women/shorts-1/items.aspx"},
-        {"name": "夹克", "url": "https://www.farfetch.com/sg/shopping/women/jackets-1/items.aspx"},
-        {"name": "外套", "url": "https://www.farfetch.com/sg/shopping/women/coats-1/items.aspx"},
-        {"name": "针织衫", "url": "https://www.farfetch.com/sg/shopping/women/knitwear-1/items.aspx"},
-        {"name": "连体衣/裤", "url": "https://www.farfetch.com/sg/shopping/women/all-in-one-1/items.aspx"},
-        {"name": "沙滩装", "url": "https://www.farfetch.com/sg/shopping/women/beachwear-1/items.aspx"},
-    ]
+    # 获取一级类目列表
+    LEVEL1_CATEGORIES = get_level1_categories(base_url)
+    
+    # 如果指定了特定类目，则只提取这些类目
+    if specific_categories:
+        LEVEL1_CATEGORIES = [cat for cat in LEVEL1_CATEGORIES if cat['name'] in specific_categories]
+        log(f"🎯 只提取指定类目: {', '.join(specific_categories)}")
+    
+    # 设置输出文件名
+    if output_file_name:
+        output_file = OUTPUT_DIR / output_file_name
+    else:
+        output_file = OUTPUT_DIR / "服装分类_所有二级类目.csv"
 
     log("=" * 80)
     log("开始提取所有服装分类（Playwright 版本）")
@@ -229,8 +259,7 @@ async def extract_categories():
     log(f"{'='*80}")
     log(f"输出文件: {output_file}")
     log(f"总记录数: {len(all_results)}")
-    log()
-
+    
     # 按一级类目分组统计
     from collections import defaultdict
     level1_stats = defaultdict(int)
@@ -244,7 +273,63 @@ async def extract_categories():
 
 def main():
     """命令行入口"""
-    asyncio.run(extract_categories())
+    parser = argparse.ArgumentParser(
+        description='FARFETCH 分类提取工具',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+使用示例：
+  # 提取所有类目（默认 cn 域名）
+  python3 -m playwright_crawler.extract_categories
+
+  # 指定域名为 sg
+  python3 -m playwright_crawler.extract_categories --base-url sg
+
+  # 只提取连衣裙和裤子
+  python3 -m playwright_crawler.extract_categories --categories 连衣裙,裤子
+
+  # 指定输出文件名
+  python3 -m playwright_crawler.extract_categories --output 我的分类.csv
+
+  # 组合使用
+  python3 -m playwright_crawler.extract_categories --base-url sg --categories 连衣裙,裤子 --output sg_连衣裙裤子.csv
+
+可用的类目：连衣裙, 裤子, 上衣, 半身裙, 西装, 短裤, 夹克, 外套, 针织衫, 连体衣/裤, 沙滩装
+        """
+    )
+    
+    parser.add_argument(
+        '--base-url',
+        type=str,
+        default='cn',
+        choices=['cn', 'sg', 'us', 'uk'],
+        help='基础 URL 域名 (cn/sg/us/uk)，默认: cn'
+    )
+    
+    parser.add_argument(
+        '--categories',
+        type=str,
+        help='指定要提取的一级类目，逗号分隔（如: 连衣裙,裤子）'
+    )
+    
+    parser.add_argument(
+        '--output',
+        type=str,
+        help='输出文件名（默认: 服装分类_所有二级类目.csv）'
+    )
+    
+    args = parser.parse_args()
+    
+    # 解析类目列表
+    specific_categories = None
+    if args.categories:
+        specific_categories = [cat.strip() for cat in args.categories.split(',')]
+    
+    # 运行提取
+    asyncio.run(extract_categories(
+        base_url=args.base_url,
+        specific_categories=specific_categories,
+        output_file_name=args.output
+    ))
 
 
 if __name__ == "__main__":

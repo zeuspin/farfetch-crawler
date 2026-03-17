@@ -76,9 +76,25 @@ full-shoes: ## 完整爬取女鞋类目（26个分类）
 		echo "$(YELLOW)❌ 已取消$(NC)"; \
 	fi
 
-extract: ## 重新提取分类
-	@echo "$(GREEN)📊 提取分类...$(NC)"
+extract: ## 提取所有分类（默认 cn 域名）
+	@echo "$(GREEN)📊 提取所有分类（cn 域名）...$(NC)"
 	@python3 -m playwright_crawler.extract_categories
+
+extract-sg: ## 提取所有分类（sg 域名）
+	@echo "$(GREEN)📊 提取所有分类（sg 域名）...$(NC)"
+	@python3 -m playwright_crawler.extract_categories --base-url sg
+
+extract-cn: ## 提取所有分类（cn 域名）
+	@echo "$(GREEN)📊 提取所有分类（cn 域名）...$(NC)"
+	@python3 -m playwright_crawler.extract_categories --base-url cn
+
+extract-dresses: ## 只提取连衣裙分类
+	@echo "$(GREEN)📊 只提取连衣裙分类...$(NC)"
+	@python3 -m playwright_crawler.extract_categories --categories 连衣裙
+
+extract-pants: ## 只提取裤子分类
+	@echo "$(GREEN)📊 只提取裤子分类...$(NC)"
+	@python3 -m playwright_crawler.extract_categories --categories 裤子
 
 test-timeout: ## 测试超时时间
 	@echo "$(GREEN)🧪 超时时间测试工具...$(NC)"

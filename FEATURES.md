@@ -7,10 +7,29 @@
 
 **使用方法：**
 ```bash
+# 提取所有分类（默认 cn 域名）
 make extract
+
+# 使用 sg 域名
+make extract-sg
+
+# 只提取连衣裙和裤子
+python3 -m playwright_crawler.extract_categories --categories 连衣裙,裤子
+
+# 指定输出文件名
+python3 -m playwright_crawler.extract_categories --output 我的分类.csv
+
+# 组合使用
+python3 -m playwright_crawler.extract_categories --base-url sg --categories 连衣裙,裤子 --output sg_连衣裙裤子.csv
 ```
 
-**输出：** `output/服装分类_所有二级类目.csv`
+**支持参数：**
+- `--base-url`: 基础 URL 域名
+- `--categories`: 指定类目（逗号分隔）
+- `--output`: 输出文件名
+
+**可用类目：**
+连衣裙, 裤子, 上衣, 半身裙, 西装, 短裤, 夹克, 外套, 针织衫, 连体衣/裤, 沙滩装
 
 ---
 
